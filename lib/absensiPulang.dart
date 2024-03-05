@@ -10,19 +10,19 @@ import 'package:http/http.dart' as http;
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 
-class HalamanAbsensi extends StatefulWidget {
-  const HalamanAbsensi({super.key});
+class HalamanAbsensiPulang extends StatefulWidget {
+  const HalamanAbsensiPulang({super.key});
 
   @override
-  State<HalamanAbsensi> createState() => _HalamanAbsensiState();
+  State<HalamanAbsensiPulang> createState() => _HalamanAbsensiPulangState();
 }
 
-class _HalamanAbsensiState extends State<HalamanAbsensi> {
+class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
   DateTime _currentTime = DateTime.now();
   Timer? _timer;
   bool isLoading = false;
 
-  Future<void> absensi() async {
+  Future<void> absenPulang() async {
     setState(() {
       isLoading = true;
     });
@@ -33,28 +33,24 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
     String longitude = position.longitude.toString();
 
     SharedPreferences shared = await SharedPreferences.getInstance();
-    String? siswaId = shared.getString('id_siswa');
     String? token = shared.getString('token');
-
     final String tanggalSekarang =
         DateFormat('yyyy-MM-dd').format(DateTime.now());
-    String jamMasuk = DateFormat('HH:mm:ss').format(DateTime.now());
+    String jamPulang = DateFormat('HH:mm:ss').format(DateTime.now());
     final response = await http.post(
-      Uri.parse(koneksi().baseUrl + 'kehadiran/absensi?token=$token'),
+      Uri.parse(koneksi().baseUrl + 'kehadiran/absensi/pulang?token=$token'),
       body: {
         'latitude': latitude,
         'longitude': longitude,
+        'jam_pulang': jamPulang,
         'tanggal': tanggalSekarang,
-        'jam_masuk': jamMasuk,
-        'status': 'hadir',
-        'id_siswa': siswaId.toString()
       },
     );
     log(response.body);
     if (response.statusCode == 400) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Anda sudah melakukan absensi masuk hari ini'),
+          content: Text('Silahkan lakukan absen masuk terlebih dahulu!'),
           backgroundColor: Colors.red,
         ),
       );
@@ -63,12 +59,7 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
       log(response.body);
       _showAlertDialog();
     } else {
-      if (response.statusCode == 201) {
-        final responseData = json.decode(response.body);
-        final absen = responseData['absen'];
-        final id_absensi = absen['id'].toString();
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('id_absensi', id_absensi);
+      if (response.statusCode == 200) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => BottomNavigation(id: 1),
         ));
@@ -154,33 +145,18 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Layanan lokasi tidak aktif'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      return Future.error('Layanan lokasi tidak aktif');
     }
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Izin lokasi ditolak secara permanen'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      return Future.error('Izin lokasi ditolak secara permanen');
     }
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission != LocationPermission.whileInUse &&
           permission != LocationPermission.always) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Izin lokasi di tolak'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        return Future.error('Izin lokasi ditolak');
       }
     }
   }
@@ -249,13 +225,13 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
                               left: 60,
                               child: InkWell(
                                 onTap: () {
-                                  absensi();
+                                  absenPulang();
                                 },
                                 child: isLoading
                                     ? CircularProgressIndicator(
                                         color: Colors.white)
                                     : Text(
-                                        "Masuk",
+                                        "Pulang",
                                         style: TextStyle(
                                           fontSize: 24,
                                           fontWeight: FontWeight.w500,

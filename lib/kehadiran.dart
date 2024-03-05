@@ -10,6 +10,7 @@ import 'package:ujikom_jurnalprakerin/formulir.dart';
 import 'package:ujikom_jurnalprakerin/history.dart';
 import 'package:http/http.dart' as http;
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
+import 'package:ujikom_jurnalprakerin/tab_bar.dart';
 
 class HalamanKehadiran extends StatefulWidget {
   const HalamanKehadiran({super.key});
@@ -23,6 +24,7 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
   int _totalRows = 0;
   List kehadiran = [];
   late DataTableSource ourdata = myData([]);
+  bool _isDataAvailable = true;
 
   Future<void> getKehadiran() async {
     SharedPreferences shared = await SharedPreferences.getInstance();
@@ -37,6 +39,7 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
         _totalRows = myData(kehadiran).rowCount;
         ourdata = myData(kehadiran);
         _rowsPerPage = _totalRows > _rowsPerPage ? _rowsPerPage : _totalRows;
+        _isDataAvailable = kehadiran.isNotEmpty;
       });
     } else {
       throw Exception('Failed to load data');
@@ -69,7 +72,15 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
     final formatHari = DateFormat('EEEE', 'id_ID');
     final formatWaktu = DateFormat('HH:mm', 'id_ID');
     final formatTanggal = DateFormat('d MMMM y', 'id_ID');
-    int _totalPages = (_totalRows / _rowsPerPage).ceil();
+    int _totalPages;
+
+    if (_totalRows.isFinite && _rowsPerPage.isFinite && _rowsPerPage != 0) {
+      _totalPages = (_totalRows / _rowsPerPage).ceil();
+    } else {
+      print('Error: Invalid values for _totalRows or _rowsPerPage');
+      _totalPages = 1;
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: PreferredSize(
@@ -145,7 +156,7 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
                                   onPressed: () {
                                     Navigator.of(context)
                                         .push(MaterialPageRoute(
-                                      builder: (context) => HalamanAbsensi(),
+                                      builder: (context) => Tab_Bar(),
                                     ));
                                   },
                                   style: TextButton.styleFrom(
@@ -293,17 +304,20 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
                     ),
                     SizedBox(height: 20),
                     Container(
-                      child: PaginatedDataTable(
-                          columns: [
-                            DataColumn(label: Text("Tanggal")),
-                            DataColumn(label: Text("Jam Masuk")),
-                            DataColumn(label: Text("Jam Pulang")),
-                            DataColumn(label: Text("Status")),
-                          ],
-                          source: ourdata,
-                          columnSpacing: 34,
-                          horizontalMargin: 30,
-                          rowsPerPage: _rowsPerPage),
+                      child: _isDataAvailable
+                          ? PaginatedDataTable(
+                              columns: [
+                                DataColumn(label: Text("Tanggal")),
+                                DataColumn(label: Text("Jam Masuk")),
+                                DataColumn(label: Text("Jam Pulang")),
+                                DataColumn(label: Text("Status")),
+                              ],
+                              source: ourdata,
+                              columnSpacing: 34,
+                              horizontalMargin: 30,
+                              rowsPerPage: _rowsPerPage,
+                            )
+                          : Text('Data tidak tersedia'),
                     ),
                   ],
                 ),

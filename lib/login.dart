@@ -31,26 +31,29 @@ class _HalamanLoginState extends State<HalamanLogin> {
         'password': passwordController.text,
       },
     );
+    log(response.body);
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       final user = responseData['user'];
       final siswa = responseData['siswa'];
-      final alamat = responseData['alamat'];
-      final latitude = responseData['latitude'];
-      final longitude = responseData['longitude'];
       final token = responseData['token'];
       final id = user['id'].toString();
       final level = user['level'].toString();
-      final id_siswa = siswa['id'].toString();
 
       if (level == 'siswa') {
         SharedPreferences prefs = await SharedPreferences.getInstance();
+        final id_siswa = siswa['id'].toString();
+        final id_kelas = siswa['kelas']['id'].toString();
         await prefs.setString('token', token);
         await prefs.setString('id', id);
         await prefs.setString('id_siswa', id_siswa);
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => BottomNavigation(id: 0),
-        ));
+        await prefs.setString('id_kelas', id_kelas);
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => BottomNavigation(id: 0),
+            ),
+            (route) => false);
+        log(id_siswa);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Anda tidak memiliki akses')),

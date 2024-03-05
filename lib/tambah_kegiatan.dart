@@ -1,63 +1,60 @@
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:searchable_paginated_dropdown/searchable_paginated_dropdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 
-class HalamanFormulir extends StatefulWidget {
-  const HalamanFormulir({super.key});
+class HalamanTambahKegiatan extends StatefulWidget {
+  const HalamanTambahKegiatan({super.key});
 
   @override
-  State<HalamanFormulir> createState() => _HalamanFormulirState();
+  State<HalamanTambahKegiatan> createState() => _HalamanTambahKegiatanState();
 }
 
-class _HalamanFormulirState extends State<HalamanFormulir> {
+class _HalamanTambahKegiatanState extends State<HalamanTambahKegiatan> {
   XFile? _image;
-  DateTime? pickedDate;
-  String statusvalue = '';
-  TextEditingController _alasanController = TextEditingController();
+  TextEditingController _deskripsiController = TextEditingController();
+  TextEditingController _durasiController = TextEditingController();
   bool _isLoading = false;
 
-  Future<void> addFormulir() async {
+  Future<void> addKegiatan() async {
     setState(() {
       _isLoading = true;
     });
-    SharedPreferences shared = await SharedPreferences.getInstance();
-    String? siswaId = shared.getString('id_siswa');
-    String? token = shared.getString('token');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    String? siswaId = prefs.getString('id_siswa');
+    String? kelasId = prefs.getString('id_kelas');
+    String? absenId = prefs.getString('id_absensi');
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse(koneksi().baseUrl + 'formulir/add?token=$token'),
+      Uri.parse(koneksi().baseUrl + 'kegiatan/add?token=$token'),
     );
-
-    final pickedDateValue = pickedDate;
-    final statusValue = statusvalue;
-    final alasanValue = _alasanController.text;
+    final deskripsiValue = _deskripsiController.text;
+    final durasiValue = _durasiController.text;
     final fileValue = _image != null
-        ? await http.MultipartFile.fromPath('bukti', _image!.path)
+        ? await http.MultipartFile.fromPath('foto', _image!.path)
         : null;
-
-    request.fields['tanggal'] = pickedDateValue != null
-        ? DateFormat('yyyy-MM-ddd').format(pickedDateValue)
-        : '';
-    request.fields['status'] = statusValue;
-    request.fields['catatan'] = alasanValue;
+    request.fields['deskripsi'] = deskripsiValue;
+    request.fields['durasi'] = durasiValue;
+    request.fields['id_absensi'] = absenId.toString();
+    // request.fields['id_absensi'] = '1';
     request.fields['id_siswa'] = siswaId.toString();
+    request.fields['id_kelas'] = kelasId.toString();
     if (fileValue != null) {
       request.files.add(fileValue);
     }
 
     try {
       var response = await request.send();
+      print('Response Body: ${await response.stream.bytesToString()}');
       if (response.statusCode == 201) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => BottomNavigation(id: 1),
+          builder: (context) => BottomNavigation(id: 2),
         ));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -149,7 +146,7 @@ class _HalamanFormulirState extends State<HalamanFormulir> {
             centerTitle: true,
             backgroundColor: Color.fromARGB(255, 0, 1, 102),
             title: Text(
-              'Formulir',
+              'Tambah Kegiatan',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w500,
@@ -167,47 +164,8 @@ class _HalamanFormulirState extends State<HalamanFormulir> {
             child: Column(
               children: [
                 SizedBox(height: 15),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      print(picked);
-                      setState(() {
-                        pickedDate = picked;
-                      });
-                    }
-                  },
-                  child: Container(
-                    height: 55,
-                    padding: EdgeInsets.only(top: 3, left: 15),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 7,
-                        ),
-                      ],
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        pickedDate != null
-                            ? DateFormat.yMd().format(pickedDate!)
-                            : 'Pilih Tanggal',
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
                 Container(
-                  height: 55,
+                  height: 49,
                   padding: EdgeInsets.only(left: 15),
                   decoration: BoxDecoration(
                       color: Colors.white,
@@ -218,32 +176,19 @@ class _HalamanFormulirState extends State<HalamanFormulir> {
                           blurRadius: 7,
                         )
                       ]),
-                  child: SearchableDropdown<String>(
-                    hintText: Text('Pilih Status Keterangan'),
-                    items: [
-                      SearchableDropdownMenuItem(
-                        value: 'sakit',
-                        label: 'sakit',
-                        child: Text('Sakit'),
-                      ),
-                      SearchableDropdownMenuItem(
-                        value: 'izin',
-                        label: 'izin',
-                        child: Text('Izin'),
-                      ),
-                    ],
-                    onChanged: (String? value) {
-                      debugPrint('$value');
-                      setState(() {
-                        statusvalue = value!;
-                      });
-                    },
+                  child: TextFormField(
+                    controller: _deskripsiController,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      hintText: "Deskripsi/Kegiatan Harian",
+                      border: InputBorder.none,
+                    ),
                   ),
                 ),
                 SizedBox(height: 15),
                 Container(
-                  height: 100,
-                  padding: EdgeInsets.only(top: 3, left: 15),
+                  height: 49,
+                  padding: EdgeInsets.only(left: 15),
                   decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -254,10 +199,10 @@ class _HalamanFormulirState extends State<HalamanFormulir> {
                         )
                       ]),
                   child: TextFormField(
-                    controller: _alasanController,
+                    controller: _durasiController,
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
-                      hintText: "Catatan",
+                      hintText: "Durasi Pengerjaan (menit)",
                       border: InputBorder.none,
                     ),
                   ),
@@ -337,7 +282,7 @@ class _HalamanFormulirState extends State<HalamanFormulir> {
                 SizedBox(height: 15),
                 InkWell(
                   onTap: () {
-                    addFormulir();
+                    addKegiatan();
                   },
                   child: Container(
                     alignment: Alignment.center,

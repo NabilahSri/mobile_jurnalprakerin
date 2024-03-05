@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
+import 'package:ujikom_jurnalprakerin/kegiatan.dart';
 import 'package:ujikom_jurnalprakerin/kehadiran.dart';
 import 'package:ujikom_jurnalprakerin/home.dart';
 import 'package:ujikom_jurnalprakerin/profil.dart';
@@ -37,6 +38,10 @@ class _BottomNavigationState extends State<BottomNavigation> {
               title: Text("Kehadiran"),
               selectedColor: Color.fromARGB(255, 0, 1, 102)),
           SalomonBottomBarItem(
+              icon: Icon(Icons.list),
+              title: Text("Kegiatan"),
+              selectedColor: Color.fromARGB(255, 0, 1, 102)),
+          SalomonBottomBarItem(
               icon: Icon(Icons.people),
               title: Text("Profil"),
               selectedColor: Color.fromARGB(255, 0, 1, 102))
@@ -63,6 +68,9 @@ class _BottomNavigationState extends State<BottomNavigation> {
         widget = const HalamanKehadiran();
         break;
       case 2:
+        widget = const HalamanKegiatan();
+        break;
+      case 3:
         widget = const HalamanProfil();
         break;
       default:
