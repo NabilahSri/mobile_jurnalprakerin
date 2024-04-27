@@ -6,60 +6,86 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
 import 'package:ujikom_jurnalprakerin/custom_snackbar_error.dart';
 import 'package:ujikom_jurnalprakerin/custom_snackbar_success.dart';
-import 'package:ujikom_jurnalprakerin/custom_snackbar_warning.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
+import 'package:ujikom_jurnalprakerin/profil.dart';
 
-class HalamanLogin extends StatefulWidget {
-  const HalamanLogin({super.key});
+class HalamanEditAkun extends StatefulWidget {
+  const HalamanEditAkun({super.key});
 
   @override
-  State<HalamanLogin> createState() => _HalamanLoginState();
+  State<HalamanEditAkun> createState() => _HalamanEditProfilState();
 }
 
-class _HalamanLoginState extends State<HalamanLogin> {
+class _HalamanEditProfilState extends State<HalamanEditAkun> {
   bool _isLoading = false;
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  Map<String, dynamic> userData = {};
+  Future<void> fetchData() async {
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    String? userId = shared.getString('id');
+    String? token = shared.getString('token');
+    final response = await http
+        .get(Uri.parse(koneksi().baseUrl + 'auth/show/$userId?token=$token'));
+    if (response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body);
+      if (jsonResponse['success']) {
+        setState(() {
+          userData = jsonResponse['user'];
+          usernameController.text = userData['username'];
+        });
+        log(userData.toString());
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mendapatkan data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
-  Future<void> login(BuildContext context) async {
+  Future<void> editData() async {
     setState(() {
       _isLoading = true;
     });
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    String? userId = shared.getString('id');
+    String? token = shared.getString('token');
+
     final response = await http.post(
-      Uri.parse(koneksi().baseUrl + 'auth/login'),
-      body: {
+      Uri.parse(koneksi().baseUrl + 'auth/edit/$userId?token=$token'),
+      body: jsonEncode({
         'username': usernameController.text,
         'password': passwordController.text,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
       },
     );
-    log(response.body);
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      final user = responseData['user'];
-      final siswa = responseData['siswa'];
-      final token = responseData['token'];
-      final id = user['id'].toString();
-      final level = user['level'].toString();
 
-      if (level == 'siswa') {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        final id_siswa = siswa['id'].toString();
-        final id_kelas = siswa['kelas']['id'].toString();
-        await prefs.setString('token', token);
-        await prefs.setString('id', id);
-        await prefs.setString('id_siswa', id_siswa);
-        await prefs.setString('id_kelas', id_kelas);
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => BottomNavigation(id: 3),
-            ),
-            (route) => false);
+    if (response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body);
+      if (jsonResponse['success']) {
+        CustomSnackBarSuccess.show(context, 'Data berhasil diupdate.');
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => BottomNavigation(id: 3),
+        ));
       } else {
-        CustomSnackBarWarning.show(context, 'Anda tidak memiliki hak akses!');
+        CustomSnackBarError.show(context, 'Data gagal diupdate!');
       }
     } else {
-      CustomSnackBarError.show(context, 'Username atau password tidak sesuai');
+      CustomSnackBarError.show(context, 'Tidak boleh ada data yang kosong!');
     }
     setState(() {
       _isLoading = false;
@@ -67,9 +93,39 @@ class _HalamanLoginState extends State<HalamanLogin> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(55.0),
+        child: Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: AppBar(
+            backgroundColor: Color.fromARGB(255, 0, 160, 234),
+            title: Text(
+              'Edit Akun',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         child: SafeArea(
           child: Container(
@@ -78,49 +134,6 @@ class _HalamanLoginState extends State<HalamanLogin> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 20),
-                Container(
-                  alignment: Alignment.center,
-                  child: Image(
-                    image: AssetImage('assets/images/logo-ypc.png'),
-                    height: 150,
-                    width: 150,
-                  ),
-                ),
-                Container(
-                  child: Text(
-                    'Jurnal Prakerin',
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 0, 1, 102),
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                ),
-                SizedBox(height: 50),
-                //inputNISN
-                Container(
-                  height: 55,
-                  padding: EdgeInsets.only(top: 3, left: 15),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 7,
-                        ),
-                      ]),
-                  child: TextFormField(
-                    controller: usernameController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      hintText: "Username",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
                 //inputPassword
                 SizedBox(height: 15),
                 Container(
@@ -136,11 +149,37 @@ class _HalamanLoginState extends State<HalamanLogin> {
                         )
                       ]),
                   child: TextFormField(
-                    controller: passwordController,
+                    keyboardType: TextInputType.text,
+                    controller: usernameController,
+                    onChanged: (value) {
+                      usernameController.text = value;
+                    },
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 15),
+                Container(
+                  height: 55,
+                  padding: EdgeInsets.only(top: 3, left: 15),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 7,
+                        )
+                      ]),
+                  child: TextFormField(
                     keyboardType: TextInputType.text,
                     obscureText: true,
+                    onChanged: (value) {
+                      passwordController.text = value;
+                    },
                     decoration: InputDecoration(
-                      hintText: "Kata Sandi",
+                      hintText: "Masukan kata sandi jika ingin di ubah",
                       border: InputBorder.none,
                     ),
                   ),
@@ -148,13 +187,13 @@ class _HalamanLoginState extends State<HalamanLogin> {
                 SizedBox(height: 15),
                 InkWell(
                   onTap: () {
-                    login(context);
+                    editData();
                   },
                   child: Container(
                     alignment: Alignment.center,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 0, 1, 102),
+                      color: Color.fromARGB(255, 0, 160, 234),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
@@ -164,11 +203,9 @@ class _HalamanLoginState extends State<HalamanLogin> {
                       ],
                     ),
                     child: _isLoading
-                        ? CircularProgressIndicator(
-                            color: Colors.white,
-                          )
+                        ? CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            'Masuk',
+                            'Simpan Perubahan',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,

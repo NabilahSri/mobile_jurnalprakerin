@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
+import 'package:ujikom_jurnalprakerin/absensi.dart';
 import 'package:ujikom_jurnalprakerin/kegiatan.dart';
 import 'package:ujikom_jurnalprakerin/kehadiran.dart';
 import 'package:ujikom_jurnalprakerin/home.dart';
 import 'package:ujikom_jurnalprakerin/profil.dart';
+import 'package:ujikom_jurnalprakerin/tabBar_view.dart';
 
 class BottomNavigation extends StatefulWidget {
   int id;
@@ -25,33 +27,43 @@ class _BottomNavigationState extends State<BottomNavigation> {
 
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      bottomNavigationBar: SalomonBottomBar(
-        margin: EdgeInsets.all(18),
-        items: [
-          SalomonBottomBarItem(
-              icon: Icon(Icons.home),
-              title: Text("Utama"),
-              selectedColor: Color.fromARGB(255, 0, 1, 102)),
-          SalomonBottomBarItem(
-              icon: Icon(Icons.fingerprint),
-              title: Text("Kehadiran"),
-              selectedColor: Color.fromARGB(255, 0, 1, 102)),
-          SalomonBottomBarItem(
-              icon: Icon(Icons.list),
-              title: Text("Kegiatan"),
-              selectedColor: Color.fromARGB(255, 0, 1, 102)),
-          SalomonBottomBarItem(
-              icon: Icon(Icons.people),
-              title: Text("Profil"),
-              selectedColor: Color.fromARGB(255, 0, 1, 102))
-        ],
-        currentIndex: index,
-        onTap: (selectedIndex) {
-          setState(() {
-            index = selectedIndex;
-          });
-        },
+      bottomNavigationBar: Container(
+        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        decoration: BoxDecoration(
+            boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black38)],
+            color: Color.fromARGB(255, 0, 160, 234),
+            borderRadius: BorderRadius.all(Radius.circular(40))),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: SalomonBottomBar(
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Color.fromARGB(255, 0, 1, 102),
+            items: [
+              SalomonBottomBarItem(
+                icon: Icon(Icons.home),
+                title: Text("Utama"),
+              ),
+              SalomonBottomBarItem(
+                icon: Icon(Icons.fingerprint),
+                title: Text("Kehadiran"),
+              ),
+              SalomonBottomBarItem(
+                icon: Icon(Icons.list),
+                title: Text("Kegiatan"),
+              ),
+              SalomonBottomBarItem(
+                icon: Icon(Icons.settings),
+                title: Text("Pengaturan"),
+              )
+            ],
+            currentIndex: index,
+            onTap: (selectedIndex) {
+              setState(() {
+                index = selectedIndex;
+              });
+            },
+          ),
+        ),
       ),
       body: Container(
           color: Colors.white, child: getSelectedWidget(index: index)),
@@ -65,7 +77,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         widget = const HalamanHome();
         break;
       case 1:
-        widget = const HalamanKehadiran();
+        widget = const TabBar_view();
         break;
       case 2:
         widget = const HalamanKegiatan();
@@ -74,7 +86,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         widget = const HalamanProfil();
         break;
       default:
-        widget = const HalamanHome();
+        widget = const HalamanProfil();
     }
     return widget;
   }

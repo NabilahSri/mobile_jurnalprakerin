@@ -20,6 +20,7 @@ class HalamanKegiatan extends StatefulWidget {
 class _HalamanKegiatanState extends State<HalamanKegiatan> {
   List kegiatan = [];
   bool _isDataAvailable = true;
+  DateFormat _dateFormat = DateFormat('dd-MM-yyyy');
 
   Future<void> validasiAbsen() async {
     SharedPreferences shared = await SharedPreferences.getInstance();
@@ -39,96 +40,6 @@ class _HalamanKegiatanState extends State<HalamanKegiatan> {
       Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => HalamanTambahKegiatan(),
       ));
-    }
-  }
-
-  Future<void> deleteKegiatan(String kegiatanId) async {
-    SharedPreferences shared = await SharedPreferences.getInstance();
-    String? token = shared.getString('token');
-    if (token != null) {
-      bool? confirmLogout = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Center(child: Text('Hapus Kegiatan')),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Yakin ingin menghapus data ini?'),
-              ],
-            ),
-            actions: [
-              InkWell(
-                onTap: () {
-                  Navigator.pop(context, true);
-                },
-                child: Container(
-                  alignment: Alignment.center,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 0, 1, 102),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Text(
-                    'Ya',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 5),
-              InkWell(
-                onTap: () {
-                  Navigator.pop(context, false);
-                },
-                child: Container(
-                  alignment: Alignment.center,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Text(
-                    'Batal',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (confirmLogout == true) {
-        final response = await http.get(
-          Uri.parse(
-              koneksi().baseUrl + 'kegiatan/delete/$kegiatanId?token=$token'),
-        );
-        log(kegiatanId);
-        log(response.body);
-        if (response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Data berhasil dihapus'),
-            ),
-          );
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => BottomNavigation(id: 2)),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Data gagal dihapus'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
     }
   }
 
@@ -158,29 +69,12 @@ class _HalamanKegiatanState extends State<HalamanKegiatan> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(55.0),
+        preferredSize: Size.fromHeight(5.0),
         child: Container(
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: AppBar(
-            centerTitle: true,
-            automaticallyImplyLeading: false,
-            backgroundColor: Color.fromARGB(255, 0, 1, 102),
-            title: Text(
-              'Daftar Kegiatan',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
+          child: Container(
+            color: Color.fromARGB(253, 3, 146, 213),
           ),
         ),
       ),
@@ -188,15 +82,25 @@ class _HalamanKegiatanState extends State<HalamanKegiatan> {
         child: SafeArea(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(15.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 20),
-                Text(
-                  'Daftar kegiatan hari ini:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Daftar Kegiatan',
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
                 ),
+                Divider(color: Colors.grey),
                 SizedBox(height: 10),
                 _isDataAvailable
                     ? ListView.builder(
@@ -204,50 +108,66 @@ class _HalamanKegiatanState extends State<HalamanKegiatan> {
                         itemCount: kegiatan.length,
                         itemBuilder: (BuildContext context, int index) {
                           final item = kegiatan[index];
-                          return Card(
-                            margin: EdgeInsets.symmetric(vertical: 5),
-                            child: ListTile(
-                              title: Text(item['deskripsi'] ?? ''),
-                              subtitle: Text((item['durasi'] ?? '') + " menit"),
-                              trailing: Container(
-                                width: 100, // Set the desired width
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(Icons.edit),
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                HalamanEditKegiatan(
-                                              kegiatanId: item['id'].toString(),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 15.0),
+                            child: Container(
+                              margin: EdgeInsets.only(bottom: 5),
+                              decoration: BoxDecoration(
+                                  color: Color.fromARGB(150, 3, 133, 194),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(15))),
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => HalamanEditKegiatan(
+                                        kegiatanId: item['id'].toString(),
+                                      ),
                                     ),
-                                    IconButton(
-                                      icon: Icon(Icons.delete),
-                                      onPressed: () {
-                                        deleteKegiatan(item['id'].toString());
-                                      },
-                                    ),
-                                  ],
+                                  );
+                                },
+                                child: ListTile(
+                                  title: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _dateFormat.format(
+                                            DateTime.parse(item['created_at'])),
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      Text(
+                                        item['deskripsi'] ?? '',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18),
+                                      ),
+                                      Text(
+                                        (item['durasi'] ?? '') + " menit",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                  // subtitle: Text(
+                                  //   (item['durasi'] ?? '') + " menit",
+                                  //   style: TextStyle(color: Colors.white),
+                                  // ),
                                 ),
                               ),
                             ),
                           );
                         },
                       )
-                    : Center(child: Text('Data tidak tersedia')),
+                    : Image.asset('assets/images/nodata.jpg'),
               ],
             ),
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Color.fromARGB(255, 0, 160, 234),
+        backgroundColor: Color.fromARGB(150, 3, 133, 194),
         tooltip: 'Tambah kegiatan',
         onPressed: () {
           validasiAbsen();

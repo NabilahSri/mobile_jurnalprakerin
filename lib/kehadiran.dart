@@ -10,7 +10,7 @@ import 'package:ujikom_jurnalprakerin/formulir.dart';
 import 'package:ujikom_jurnalprakerin/history.dart';
 import 'package:http/http.dart' as http;
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
-import 'package:ujikom_jurnalprakerin/tab_bar.dart';
+import 'package:ujikom_jurnalprakerin/tabBar_view.dart';
 
 class HalamanKehadiran extends StatefulWidget {
   const HalamanKehadiran({super.key});
@@ -84,28 +84,10 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(55.0),
+        preferredSize: Size.fromHeight(5.0),
         child: Container(
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: AppBar(
-            centerTitle: true,
-            automaticallyImplyLeading: false,
-            backgroundColor: Color.fromARGB(255, 0, 1, 102),
-            title: Text(
-              'Kehadiran',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
+          child: Container(
+            color: Color.fromARGB(255, 0, 1, 102),
           ),
         ),
       ),
@@ -115,209 +97,231 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
             builder: (BuildContext context, BoxConstraints constraints) {
               return Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(15.0),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              formatWaktu.format(DateTime.now()),
-                              style: TextStyle(
-                                fontSize: 42,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              formatHari.format(DateTime.now()),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              formatTanggal.format(DateTime.now()),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Column(
-                              children: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute(
-                                      builder: (context) => Tab_Bar(),
-                                    ));
-                                  },
-                                  style: TextButton.styleFrom(
-                                    backgroundColor:
-                                        Color.fromARGB(255, 0, 160, 234),
-                                    foregroundColor: Colors.white,
-                                    fixedSize: Size(90, 85),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: Text('Absen',
-                                      style: TextStyle(fontSize: 18)),
-                                ),
-                              ],
-                            ),
-                            SizedBox(width: 5),
-                            Column(
-                              children: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute(
-                                      builder: (context) => HalamanFormulir(),
-                                    ));
-                                  },
-                                  style: TextButton.styleFrom(
-                                    backgroundColor:
-                                        Color.fromARGB(255, 0, 160, 234),
-                                    foregroundColor: Colors.white,
-                                    fixedSize: Size(85, 40),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: Text('Formulir',
-                                      style: TextStyle(fontSize: 18)),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute(
-                                      builder: (context) => HalamanHistory(),
-                                    ));
-                                  },
-                                  style: TextButton.styleFrom(
-                                    backgroundColor:
-                                        Color.fromARGB(255, 0, 160, 234),
-                                    foregroundColor: Colors.white,
-                                    fixedSize: Size(85, 40),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: Text('Histori',
-                                      style: TextStyle(fontSize: 18)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Container(
-                      height: 55,
-                      padding: EdgeInsets.only(left: 15),
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 7,
-                            )
-                          ]),
-                      child: SearchableDropdown<int>(
-                        hintText: Text('Pilih Bulan'),
-                        items: [
-                          SearchableDropdownMenuItem(
-                            value: 1,
-                            label: 'januari',
-                            child: Text('Januari'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 2,
-                            label: 'februari',
-                            child: Text('Februari'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 3,
-                            label: 'maret',
-                            child: Text('Maret'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 4,
-                            label: 'april',
-                            child: Text('April'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 5,
-                            label: 'mei',
-                            child: Text('Mei'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 6,
-                            label: 'juni',
-                            child: Text('Juni'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 7,
-                            label: 'juli',
-                            child: Text('Juli'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 8,
-                            label: 'agustus',
-                            child: Text('Agustus'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 9,
-                            label: 'september',
-                            child: Text('September'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 10,
-                            label: 'oktober',
-                            child: Text('Oktober'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 11,
-                            label: 'november',
-                            child: Text('Novenber'),
-                          ),
-                          SearchableDropdownMenuItem(
-                            value: 12,
-                            label: 'desember',
-                            child: Text('Desember'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Kehadiran',
+                            style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600]),
                           ),
                         ],
-                        onChanged: (int? value) {
-                          debugPrint('$value');
-                        },
+                      ),
+                    ),
+                    Divider(color: Colors.grey),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15.0, vertical: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                formatWaktu.format(DateTime.now()),
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                formatHari.format(DateTime.now()),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                formatTanggal.format(DateTime.now()),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Column(
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .push(MaterialPageRoute(
+                                        builder: (context) => TabBar_view(),
+                                      ));
+                                    },
+                                    style: TextButton.styleFrom(
+                                      backgroundColor:
+                                          Color.fromARGB(255, 0, 160, 234),
+                                      foregroundColor: Colors.white,
+                                      fixedSize: Size(90, 85),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text('Absen',
+                                        style: TextStyle(fontSize: 18)),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(width: 5),
+                              Column(
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .push(MaterialPageRoute(
+                                        builder: (context) => HalamanFormulir(),
+                                      ));
+                                    },
+                                    style: TextButton.styleFrom(
+                                      backgroundColor:
+                                          Color.fromARGB(255, 0, 160, 234),
+                                      foregroundColor: Colors.white,
+                                      fixedSize: Size(85, 40),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text('Formulir',
+                                        style: TextStyle(fontSize: 18)),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .push(MaterialPageRoute(
+                                        builder: (context) => HalamanHistory(),
+                                      ));
+                                    },
+                                    style: TextButton.styleFrom(
+                                      backgroundColor:
+                                          Color.fromARGB(255, 0, 160, 234),
+                                      foregroundColor: Colors.white,
+                                      fixedSize: Size(85, 40),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text('Histori',
+                                        style: TextStyle(fontSize: 18)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                     SizedBox(height: 20),
-                    Container(
-                      child: _isDataAvailable
-                          ? PaginatedDataTable(
-                              columns: [
-                                DataColumn(label: Text("Tanggal")),
-                                DataColumn(label: Text("Jam Masuk")),
-                                DataColumn(label: Text("Jam Pulang")),
-                                DataColumn(label: Text("Status")),
-                              ],
-                              source: ourdata,
-                              columnSpacing: 34,
-                              horizontalMargin: 30,
-                              rowsPerPage: _rowsPerPage,
-                            )
-                          : Text('Data tidak tersedia'),
+                    // Container(
+                    //   height: 55,
+                    //   padding: EdgeInsets.only(left: 15),
+                    //   decoration: BoxDecoration(
+                    //       color: Colors.white,
+                    //       borderRadius: BorderRadius.circular(16),
+                    //       boxShadow: [
+                    //         BoxShadow(
+                    //           color: Colors.black.withOpacity(0.1),
+                    //           blurRadius: 7,
+                    //         )
+                    //       ]),
+                    //   child: SearchableDropdown<int>(
+                    //     hintText: Text('Pilih Bulan'),
+                    //     items: [
+                    //       SearchableDropdownMenuItem(
+                    //         value: 1,
+                    //         label: 'januari',
+                    //         child: Text('Januari'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 2,
+                    //         label: 'februari',
+                    //         child: Text('Februari'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 3,
+                    //         label: 'maret',
+                    //         child: Text('Maret'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 4,
+                    //         label: 'april',
+                    //         child: Text('April'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 5,
+                    //         label: 'mei',
+                    //         child: Text('Mei'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 6,
+                    //         label: 'juni',
+                    //         child: Text('Juni'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 7,
+                    //         label: 'juli',
+                    //         child: Text('Juli'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 8,
+                    //         label: 'agustus',
+                    //         child: Text('Agustus'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 9,
+                    //         label: 'september',
+                    //         child: Text('September'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 10,
+                    //         label: 'oktober',
+                    //         child: Text('Oktober'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 11,
+                    //         label: 'november',
+                    //         child: Text('Novenber'),
+                    //       ),
+                    //       SearchableDropdownMenuItem(
+                    //         value: 12,
+                    //         label: 'desember',
+                    //         child: Text('Desember'),
+                    //       ),
+                    //     ],
+                    //     onChanged: (int? value) {
+                    //       debugPrint('$value');
+                    //     },
+                    //   ),
+                    // ),
+                    // SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                      child: Container(
+                        child: _isDataAvailable
+                            ? PaginatedDataTable(
+                                columns: [
+                                  DataColumn(label: Text("Tanggal")),
+                                  DataColumn(label: Text("Jam Masuk")),
+                                  DataColumn(label: Text("Jam Pulang")),
+                                  DataColumn(label: Text("Status")),
+                                ],
+                                source: ourdata,
+                                columnSpacing: 34,
+                                horizontalMargin: 30,
+                                rowsPerPage: _rowsPerPage,
+                              )
+                            : Image.asset('assets/images/nodata.jpg'),
+                      ),
                     ),
                   ],
                 ),
@@ -332,6 +336,7 @@ class _HalamanKehadiranState extends State<HalamanKehadiran> {
 
 class myData extends DataTableSource {
   List<dynamic> data;
+  DateFormat _dateFormat = DateFormat('dd-MM-yyyy');
 
   myData(this.data);
 
@@ -340,7 +345,11 @@ class myData extends DataTableSource {
     if (index < data.length) {
       final item = data[index];
       return DataRow(cells: [
-        DataCell(Text(item['tanggal'] ?? '')),
+        DataCell(
+          Text(
+            _dateFormat.format(DateTime.parse(item['tanggal'])),
+          ),
+        ),
         DataCell(Text(item['jam_masuk'] ?? '')),
         DataCell(Text(item['jam_pulang'] ?? '-')),
         DataCell(Text(item['status'] ?? '')),

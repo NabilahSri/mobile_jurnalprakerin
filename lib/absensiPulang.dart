@@ -8,7 +8,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_error.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_success.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_warning.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
+import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 
 class HalamanAbsensiPulang extends StatefulWidget {
   const HalamanAbsensiPulang({super.key});
@@ -18,9 +22,12 @@ class HalamanAbsensiPulang extends StatefulWidget {
 }
 
 class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
+  String vc = '';
   DateTime _currentTime = DateTime.now();
   Timer? _timer;
   bool isLoading = false;
+  bool sudahAbsenMasuk = false;
+  final String tanggal = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   Future<void> absenPulang() async {
     setState(() {
@@ -37,6 +44,8 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
     final String tanggalSekarang =
         DateFormat('yyyy-MM-dd').format(DateTime.now());
     String jamPulang = DateFormat('HH:mm:ss').format(DateTime.now());
+    String? modeAbsen = shared.getString('absen_model');
+    log(modeAbsen.toString());
     final response = await http.post(
       Uri.parse(koneksi().baseUrl + 'kehadiran/absensi/pulang?token=$token'),
       body: {
@@ -44,38 +53,42 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
         'longitude': longitude,
         'jam_pulang': jamPulang,
         'tanggal': tanggalSekarang,
+        'mode': modeAbsen,
+        'token_keluar': vc,
       },
     );
-    log(response.body);
+    log(vc);
     if (response.statusCode == 400) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Silahkan lakukan absen masuk terlebih dahulu!'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      CustomSnackBarWarning.show(
+          context, 'Silahkan lakukan absensi masuk terlebih dahulu!');
+    }
+    if (response.statusCode == 404) {
+      CustomSnackBarError.show(context, 'Kode Expired!');
+    }
+    if (response.statusCode == 401) {
+      CustomSnackBarError.show(context, 'Kode tidak sesuai');
     }
     if (response.statusCode == 403) {
       log(response.body);
       _showAlertDialog();
     } else {
       if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final absen = responseData['absen'];
+        final id_absensi = absen['id'].toString();
+        final tanggal_absen = absen['tanggal'];
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('tanggal_absen', tanggal_absen);
+
         Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => BottomNavigation(id: 1),
         ));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Berhasil'),
-          ),
-        );
+        CustomSnackBarSuccess.show(
+            context, 'Absensi pulang berhasil dilakukan.');
       }
       if (response.statusCode == 409) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        CustomSnackBarError.show(context, 'Gagal melakukan absensi pulang!');
       }
     }
     setState(() {
@@ -89,11 +102,27 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
     });
   }
 
+  Future<String?> _initializeAbsensiMode() async {
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    return shared.getString('absen_model');
+  }
+
+  Future<String?> _initializetanggalAbsensi() async {
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    final tanggal_absen = shared.getString('tanggal_absen');
+    if (tanggal_absen != tanggal) {
+      sudahAbsenMasuk = false;
+    } else {
+      sudahAbsenMasuk = true;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _determinePosition();
     _timer = Timer.periodic(Duration(seconds: 1), (Timer t) => _updateTime());
+    _initializetanggalAbsensi();
   }
 
   @override
@@ -171,95 +200,201 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
         child: SafeArea(
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.all(15.0),
+            padding: EdgeInsets.symmetric(horizontal: 15.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  height: 420,
-                  padding: EdgeInsets.only(left: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                      )
-                    ],
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 70, vertical: 15),
-                    child: Column(
-                      children: [
-                        Text(
-                          formatWaktu.format(DateTime.now()),
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          formatHari.format(DateTime.now()),
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          formatTanggal.format(DateTime.now()),
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Stack(
-                          children: [
-                            CustomPaint(
-                              size: Size(180, 180),
-                              painter: ThreeColorCirclePainter(),
-                            ),
-                            Positioned(
-                              top: 80,
-                              left: 60,
-                              child: InkWell(
-                                onTap: () {
-                                  absenPulang();
-                                },
-                                child: isLoading
-                                    ? CircularProgressIndicator(
-                                        color: Colors.white)
-                                    : Text(
-                                        "Pulang",
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                FutureBuilder<String?>(
+                    future: _initializeAbsensiMode(),
+                    builder: (context, snapshot) {
+                      String? absensiMode = snapshot.data;
+                      return absensiMode == 'Lokasi'
+                          ? Container(
+                              height: 420,
+                              padding: EdgeInsets.only(left: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 10,
+                                  )
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        Text(
-                          'Ketentuan:',
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 1, 101, 147),
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Text(
-                          'Pastikan anda berada pada radius 50 m dari tempat prakerin',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 70, vertical: 15),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      formatWaktu.format(DateTime.now()),
+                                      style: TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      formatHari.format(DateTime.now()),
+                                      style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      formatTanggal.format(DateTime.now()),
+                                      style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    SizedBox(height: 20),
+                                    Stack(
+                                      children: [
+                                        CustomPaint(
+                                          size: Size(180, 180),
+                                          painter: sudahAbsenMasuk
+                                              ? ThreeColorCirclePainterGreen()
+                                              : ThreeColorCirclePainter(),
+                                        ),
+                                        Positioned(
+                                          top: 80,
+                                          left: 60,
+                                          child: sudahAbsenMasuk
+                                              ? Text(
+                                                  "Selesai",
+                                                  style: TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.white,
+                                                  ),
+                                                )
+                                              : InkWell(
+                                                  onTap: () {
+                                                    absenPulang();
+                                                  },
+                                                  child: isLoading
+                                                      ? CircularProgressIndicator(
+                                                          color: Colors.white)
+                                                      : Text(
+                                                          "Pulang",
+                                                          style: TextStyle(
+                                                            fontSize: 24,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 20),
+                                    Text(
+                                      'Ketentuan:',
+                                      style: TextStyle(
+                                        color: Color.fromARGB(255, 1, 101, 147),
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    SizedBox(height: 20),
+                                    Text(
+                                      'Pastikan anda berada pada radius 500 m dari tempat prakerin',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Container(
+                              height: 420,
+                              padding: EdgeInsets.only(left: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 10,
+                                  )
+                                ],
+                              ),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 60, vertical: 15),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Text(
+                                          formatWaktu.format(DateTime.now()),
+                                          style: TextStyle(
+                                            fontSize: 36,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          formatHari.format(DateTime.now()),
+                                          style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          formatTanggal.format(DateTime.now()),
+                                          style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 20),
+                                    OtpTextField(
+                                      numberOfFields: 5,
+                                      borderColor: Color(0xFF512DA8),
+                                      //set to true to show as box or false to show as dash
+                                      showFieldAsBox: true,
+                                      //runs when a code is typed in
+                                      onCodeChanged: (String code) {
+                                        //handle validation or checks here
+                                      },
+                                      //runs when every textfield is filled
+                                      onSubmit: (String verificationCode) {
+                                        setState(() {
+                                          vc = verificationCode;
+                                        });
+                                        log(vc);
+                                        absenPulang();
+                                      }, // end onSubmit
+                                    ),
+                                    SizedBox(height: 20),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          'Ketentuan:',
+                                          style: TextStyle(
+                                            color: Color.fromARGB(
+                                                255, 1, 101, 147),
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        SizedBox(height: 20),
+                                        Text(
+                                          'Silahkan masukan kode yang sudah diberikan oleh perusahaan',
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                    }),
               ],
             ),
           ),
@@ -280,8 +415,27 @@ class ThreeColorCirclePainter extends CustomPainter {
     var radius = size.width / 2;
 
     canvas.drawCircle(center, radius, paint1);
-    canvas.drawCircle(center, radius - 10, paint2);
-    canvas.drawCircle(center, radius - 25, paint3);
+    canvas.drawCircle(center, radius - 8, paint2);
+    canvas.drawCircle(center, radius - 15, paint3);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class ThreeColorCirclePainterGreen extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint1 = Paint()..color = Color.fromARGB(98, 54, 139, 79);
+    var paint2 = Paint()..color = Color.fromARGB(195, 54, 139, 79);
+    var paint3 = Paint()..color = Color.fromARGB(255, 54, 139, 79);
+
+    var center = Offset(size.width / 2, size.height / 2);
+    var radius = size.width / 2;
+
+    canvas.drawCircle(center, radius, paint1);
+    canvas.drawCircle(center, radius - 8, paint2);
+    canvas.drawCircle(center, radius - 15, paint3);
   }
 
   @override

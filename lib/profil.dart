@@ -3,6 +3,9 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_error.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_success.dart';
+import 'package:ujikom_jurnalprakerin/edit_akun.dart';
 import 'package:ujikom_jurnalprakerin/edit_profil.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +20,7 @@ class HalamanProfil extends StatefulWidget {
 
 class _HalamanProfilState extends State<HalamanProfil> {
   bool _isLoading = false;
+  String? groupValue;
   bool isDataDiriVisible = false;
   bool isDataKehadiranVisible = false;
   Map<String, dynamic> userData = {};
@@ -82,7 +86,7 @@ class _HalamanProfilState extends State<HalamanProfil> {
                   alignment: Alignment.center,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 0, 1, 102),
+                    color: Color.fromARGB(255, 0, 160, 234),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Text(
@@ -126,31 +130,34 @@ class _HalamanProfilState extends State<HalamanProfil> {
         );
 
         if (response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Berhasil logout'),
-            ),
-          );
+          CustomSnackBarSuccess.show(context, 'Berhasil melakukan logout.');
           shared.remove('token');
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => HalamanLogin()),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Gagal logout'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          CustomSnackBarError.show(context, 'Gagal melakukan logout!');
         }
       }
     }
+  }
+
+  Future<void> getStoredAbsenModel() async {
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    String? absensiMode = shared.getString('absen_model');
+    if (absensiMode != null) {
+      setState(() {
+        groupValue = absensiMode;
+      });
+    }
+    log(groupValue.toString());
   }
 
   @override
   void initState() {
     super.initState();
     fetchData();
+    getStoredAbsenModel();
   }
 
   @override
@@ -170,12 +177,12 @@ class _HalamanProfilState extends State<HalamanProfil> {
           ),
           child: AppBar(
             automaticallyImplyLeading: false,
-            backgroundColor: Color.fromARGB(255, 0, 1, 102),
+            backgroundColor: Color.fromARGB(255, 0, 160, 234),
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Profil',
+                  'Pengaturan',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w500,
@@ -197,7 +204,7 @@ class _HalamanProfilState extends State<HalamanProfil> {
           ? Center(
               child: CircularProgressIndicator(
                 backgroundColor: Colors.transparent,
-                color: Color.fromARGB(255, 0, 1, 102),
+                color: Color.fromARGB(255, 0, 160, 234),
               ),
             )
           : SingleChildScrollView(
@@ -211,12 +218,21 @@ class _HalamanProfilState extends State<HalamanProfil> {
                       SizedBox(height: 10),
                       Container(
                         alignment: Alignment.center,
-                        child: Image(
-                          image: AssetImage('assets/images/logo-ypc.png'),
-                          height: 100,
-                          width: 100,
+                        child: ClipOval(
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: NetworkImage(userData['foto'] ??
+                                    "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png"),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
+                      SizedBox(height: 10),
                       Container(
                         alignment: Alignment.center,
                         child: Text(
@@ -238,13 +254,69 @@ class _HalamanProfilState extends State<HalamanProfil> {
                           ),
                         ),
                       ),
+                      Container(
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${userData['kelas']}',
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 0, 1, 102),
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
                       SizedBox(height: 50),
                       ListTile(
-                        tileColor: Color.fromARGB(255, 0, 1, 102),
+                        tileColor: Color.fromARGB(255, 0, 160, 234),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                         title: Text(
-                          'Data Diri',
+                          'Profil',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.keyboard_arrow_right,
+                          color: Colors.white,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => HalamanEditProfil(),
+                          ));
+                        },
+                      ),
+                      SizedBox(height: 10),
+                      ListTile(
+                        tileColor: Color.fromARGB(255, 0, 160, 234),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        title: Text(
+                          'Akun',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.keyboard_arrow_right,
+                          color: Colors.white,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => HalamanEditAkun(),
+                          ));
+                        },
+                      ),
+                      SizedBox(height: 10),
+                      ListTile(
+                        tileColor: Color.fromARGB(255, 0, 160, 234),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        title: Text(
+                          'Mode Absensi',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -268,92 +340,52 @@ class _HalamanProfilState extends State<HalamanProfil> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'Email',
-                                    style: TextStyle(
-                                        color: Color.fromARGB(255, 0, 1, 102),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
+                                  Row(
+                                    children: [
+                                      Radio(
+                                        value: "Lokasi",
+                                        groupValue: groupValue,
+                                        onChanged: (value) async {
+                                          setState(() {
+                                            groupValue = value!;
+                                          });
+                                          SharedPreferences shared =
+                                              await SharedPreferences
+                                                  .getInstance();
+                                          shared.setString(
+                                              'absen_model', groupValue!);
+                                          CustomSnackBarSuccess.show(context,
+                                              'Mode absensi lokasi berhasil di set.');
+                                        },
+                                      ),
+                                      Text("Lokasi"),
+                                    ],
                                   ),
-                                  Text(
-                                    '${userData['email']}',
-                                    style: TextStyle(color: Colors.grey[600]),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Username',
-                                    style: TextStyle(
-                                        color: Color.fromARGB(255, 0, 1, 102),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    '${userData['username']}',
-                                    style: TextStyle(color: Colors.grey[600]),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Kelas',
-                                    style: TextStyle(
-                                        color: Color.fromARGB(255, 0, 1, 102),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    '${userData['kelas']}',
-                                    style: TextStyle(color: Colors.grey[600]),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'No Telepon',
-                                    style: TextStyle(
-                                        color: Color.fromARGB(255, 0, 1, 102),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    '${userData['telp']}',
-                                    style: TextStyle(color: Colors.grey[600]),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    'Alamat',
-                                    style: TextStyle(
-                                        color: Color.fromARGB(255, 0, 1, 102),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    '${userData['alamat']}',
-                                    style: TextStyle(color: Colors.grey[600]),
+                                  Row(
+                                    children: [
+                                      Radio(
+                                        value: "Token",
+                                        groupValue: groupValue,
+                                        onChanged: (value) async {
+                                          setState(() {
+                                            groupValue = value!;
+                                          });
+                                          SharedPreferences shared =
+                                              await SharedPreferences
+                                                  .getInstance();
+                                          shared.setString(
+                                              'absen_model', groupValue!);
+                                          CustomSnackBarSuccess.show(context,
+                                              'Mode absensi token berhasil di set.');
+                                        },
+                                      ),
+                                      Text("Token"),
+                                    ],
                                   ),
                                 ],
                               ),
                             )
                           : Container(),
-                      SizedBox(height: 10),
-                      ListTile(
-                        tileColor: Color.fromARGB(255, 0, 1, 102),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        title: Text(
-                          'Akun',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        trailing: Icon(
-                          Icons.keyboard_arrow_right,
-                          color: Colors.white,
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => HalamanEditProfil(),
-                          ));
-                        },
-                      ),
                     ],
                   ),
                 ),

@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_error.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_success.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
@@ -18,8 +22,11 @@ class HalamanEditProfil extends StatefulWidget {
 
 class _HalamanEditProfilState extends State<HalamanEditProfil> {
   bool _isLoading = false;
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  File? _image;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController telpController = TextEditingController();
+  final TextEditingController alamatController = TextEditingController();
   Map<String, dynamic> userData = {};
   Future<void> fetchData() async {
     SharedPreferences shared = await SharedPreferences.getInstance();
@@ -32,7 +39,10 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
       if (jsonResponse['success']) {
         setState(() {
           userData = jsonResponse['user'];
-          usernameController.text = userData['username'];
+          nameController.text = userData['name'];
+          emailController.text = userData['email'];
+          telpController.text = userData['telp'];
+          alamatController.text = userData['alamat'];
         });
         log(userData.toString());
       } else {
@@ -53,51 +63,100 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
     }
   }
 
+  void _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  void _takePicture() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  void _showImagePickerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Pilih Sumber Gambar"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo),
+                title: Text("Ambil dari Galeri"),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text("Ambil Foto"),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _takePicture();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> editData() async {
     setState(() {
       _isLoading = true;
     });
     SharedPreferences shared = await SharedPreferences.getInstance();
-    String? userId = shared.getString('id');
+    String? siswaId = shared.getString('id_siswa');
     String? token = shared.getString('token');
-
-    final response = await http.post(
-      Uri.parse(koneksi().baseUrl + 'auth/edit/$userId?token=$token'),
-      body: jsonEncode({
-        'username': usernameController.text,
-        'password': passwordController.text,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(koneksi().baseUrl + 'auth/editProfil/$siswaId?token=$token'),
     );
 
-    if (response.statusCode == 200) {
-      final jsonResponse = jsonDecode(response.body);
-      if (jsonResponse['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Berhasil mengubah data'),
-          ),
-        );
-        Navigator.of(context).push(MaterialPageRoute(
+    final nameValue = nameController.text;
+    final emailValue = emailController.text;
+    final telpValue = telpController.text;
+    final alamatValue = alamatController.text;
+
+    final fileValue = _image != null
+        ? await http.MultipartFile.fromPath('foto', _image!.path)
+        : null;
+
+    request.fields['name'] = nameValue;
+    request.fields['email'] = emailValue;
+    request.fields['telp'] = telpValue;
+    request.fields['alamat'] = alamatValue;
+    if (fileValue != null) {
+      request.files.add(fileValue);
+    }
+
+    try {
+      var response = await request.send();
+      if (response.statusCode == 201) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => BottomNavigation(id: 3),
         ));
+        CustomSnackBarSuccess.show(context, 'Data berhasil di update.');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengubah data'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        CustomSnackBarError.show(context, 'Data gagal di update!');
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } catch (e) {
+      log('kesalahan server');
     }
     setState(() {
       _isLoading = false;
@@ -126,7 +185,7 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
             ],
           ),
           child: AppBar(
-            backgroundColor: Color.fromARGB(255, 0, 1, 102),
+            backgroundColor: Color.fromARGB(255, 0, 160, 234),
             title: Text(
               'Edit Profil',
               style: TextStyle(
@@ -146,7 +205,54 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //inputPassword
+                Container(
+                  alignment: Alignment.center,
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      _image == null
+                          ? ClipOval(
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: NetworkImage(userData['foto'] ??
+                                        "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png"),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ClipOval(
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: FileImage(_image!),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      InkWell(
+                        onTap: () {
+                          _showImagePickerDialog(context);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(10),
+                            ),
+                          ),
+                          child: Icon(Icons.edit, color: Colors.black),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
                 SizedBox(height: 15),
                 Container(
                   height: 55,
@@ -162,11 +268,12 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
                       ]),
                   child: TextFormField(
                     keyboardType: TextInputType.text,
-                    controller: usernameController,
+                    controller: nameController,
                     onChanged: (value) {
-                      usernameController.text = value;
+                      nameController.text = value;
                     },
                     decoration: InputDecoration(
+                      hintText: "Masukan nama",
                       border: InputBorder.none,
                     ),
                   ),
@@ -186,12 +293,63 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
                       ]),
                   child: TextFormField(
                     keyboardType: TextInputType.text,
-                    obscureText: true,
+                    controller: emailController,
                     onChanged: (value) {
-                      passwordController.text = value;
+                      emailController.text = value;
                     },
                     decoration: InputDecoration(
-                      hintText: "Masukan kata sandi jika ingin di ubah",
+                      hintText: "Masukan email",
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 15),
+                Container(
+                  height: 55,
+                  padding: EdgeInsets.only(top: 3, left: 15),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 7,
+                        )
+                      ]),
+                  child: TextFormField(
+                    keyboardType: TextInputType.text,
+                    controller: telpController,
+                    onChanged: (value) {
+                      telpController.text = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Masuka no telepon",
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 15),
+                Container(
+                  height: 100,
+                  padding: EdgeInsets.only(top: 3, left: 15),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 7,
+                        )
+                      ]),
+                  child: TextFormField(
+                    maxLines: 3,
+                    keyboardType: TextInputType.text,
+                    controller: alamatController,
+                    onChanged: (value) {
+                      alamatController.text = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Masukan alamat",
                       border: InputBorder.none,
                     ),
                   ),
@@ -205,7 +363,7 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
                     alignment: Alignment.center,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 0, 1, 102),
+                      color: Color.fromARGB(255, 0, 160, 234),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(

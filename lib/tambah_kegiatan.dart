@@ -6,6 +6,8 @@ import 'package:searchable_paginated_dropdown/searchable_paginated_dropdown.dart
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_error.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_success.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 
 class HalamanTambahKegiatan extends StatefulWidget {
@@ -56,18 +58,9 @@ class _HalamanTambahKegiatanState extends State<HalamanTambahKegiatan> {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => BottomNavigation(id: 2),
         ));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Data berhasil di upload'),
-          ),
-        );
+        CustomSnackBarSuccess.show(context, 'Data berhasil diupload.');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Data gagal di upload'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        CustomSnackBarError.show(context, 'Data gagal diupload!');
       }
     } catch (e) {
       log('kesalahan server');
@@ -144,7 +137,7 @@ class _HalamanTambahKegiatanState extends State<HalamanTambahKegiatan> {
           ),
           child: AppBar(
             centerTitle: true,
-            backgroundColor: Color.fromARGB(255, 0, 1, 102),
+            backgroundColor: Color.fromARGB(253, 3, 146, 213),
             title: Text(
               'Tambah Kegiatan',
               style: TextStyle(
@@ -216,7 +209,7 @@ class _HalamanTambahKegiatanState extends State<HalamanTambahKegiatan> {
                         _showImagePickerDialog(context);
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: Color.fromARGB(255, 0, 160, 234),
+                        backgroundColor: Color.fromARGB(255, 1, 101, 147),
                         foregroundColor: Colors.white,
                         fixedSize: Size(110, 48),
                         shape: RoundedRectangleBorder(
@@ -288,7 +281,7 @@ class _HalamanTambahKegiatanState extends State<HalamanTambahKegiatan> {
                     alignment: Alignment.center,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 0, 1, 102),
+                      color: Color.fromARGB(253, 3, 146, 213),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(

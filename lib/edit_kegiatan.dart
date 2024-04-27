@@ -3,8 +3,10 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_success.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 import 'package:http/http.dart' as http;
 
@@ -22,7 +24,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
   TextEditingController _durasiController = TextEditingController();
   Map<String, dynamic> kegiatan = {};
   XFile? _image;
-  bool _isLoading = false;
+  bool _isLoadingUpdate = false;
   Future<void> getKegiatanIdKegiatan() async {
     SharedPreferences shared = await SharedPreferences.getInstance();
     String? token = shared.getString('token');
@@ -42,9 +44,90 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
     }
   }
 
+  Future<void> deleteKegiatan(String kegiatanId) async {
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    String? token = shared.getString('token');
+    if (token != null) {
+      bool? confirmLogout = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Center(child: Text('Hapus Kegiatan')),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Yakin ingin menghapus data ini?'),
+              ],
+            ),
+            actions: [
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context, true);
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Color.fromARGB(255, 0, 1, 102),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text(
+                    'Ya',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 5),
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context, false);
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmLogout == true) {
+        final response = await http.get(
+          Uri.parse(
+              koneksi().baseUrl + 'kegiatan/delete/$kegiatanId?token=$token'),
+        );
+        log(kegiatanId);
+        log(response.body);
+        if (response.statusCode == 200) {
+          CustomSnackBarSuccess.show(context, 'Data berhasil dihapus.');
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => BottomNavigation(id: 2)),
+          );
+        } else {
+          CustomSnackBarSuccess.show(context, 'Data gagal dihapus!');
+        }
+      }
+    }
+  }
+
   Future<void> editKegiatan() async {
     setState(() {
-      _isLoading = true;
+      _isLoadingUpdate = true;
     });
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -64,7 +147,6 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
     request.fields['deskripsi'] = deskripsiValue;
     request.fields['durasi'] = durasiValue;
     request.fields['id_absensi'] = absenId.toString();
-    // request.fields['id_absensi'] = '1';
     request.fields['id_siswa'] = siswaId.toString();
     request.fields['id_kelas'] = kelasId.toString();
     if (fileValue != null) {
@@ -78,24 +160,15 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => BottomNavigation(id: 2),
         ));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Data berhasil di update'),
-          ),
-        );
+        CustomSnackBarSuccess.show(context, 'Data berhasil diupdate.');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Data gagal di upload'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        CustomSnackBarSuccess.show(context, 'Data gagal diupdate!');
       }
     } catch (e) {
       log('kesalahan server');
     }
     setState(() {
-      _isLoading = false;
+      _isLoadingUpdate = false;
     });
   }
 
@@ -174,7 +247,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
             centerTitle: true,
             backgroundColor: Color.fromARGB(255, 0, 1, 102),
             title: Text(
-              'Edit Kegiatan',
+              'Detail Kegiatan',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w500,
@@ -325,15 +398,42 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
                         )
                       ],
                     ),
-                    child: _isLoading
+                    child: _isLoadingUpdate
                         ? CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            'Kirim',
+                            'Update',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
+                  ),
+                ),
+                SizedBox(height: 5),
+                InkWell(
+                  onTap: () {
+                    deleteKegiatan(kegiatan['id'].toString());
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                        )
+                      ],
+                    ),
+                    child: Text(
+                      'Hapus',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 )
               ],
