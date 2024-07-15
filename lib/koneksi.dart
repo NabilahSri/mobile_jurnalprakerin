@@ -1,4 +1,4 @@
 class koneksi {
-  final String baseUrl = 'http://192.168.1.4:8000/api/';
-  final String url = 'http://192.168.1.4:8000/';
+  final String baseUrl = 'https://prakerin.smk-ypc.sch.id/api/';
+  final String url = 'https://prakerin.smk-ypc.sch.id/';
 }

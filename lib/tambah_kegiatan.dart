@@ -193,7 +193,7 @@ class _HalamanTambahKegiatanState extends State<HalamanTambahKegiatan> {
                       ]),
                   child: TextFormField(
                     controller: _durasiController,
-                    keyboardType: TextInputType.text,
+                    keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: "Durasi Pengerjaan (menit)",
                       border: InputBorder.none,

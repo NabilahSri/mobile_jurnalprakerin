@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ujikom_jurnalprakerin/bottom_navigation.dart';
+import 'package:ujikom_jurnalprakerin/custom_snackbar_error.dart';
 import 'package:ujikom_jurnalprakerin/edit_kegiatan.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 import 'package:ujikom_jurnalprakerin/tambah_kegiatan.dart';
@@ -28,14 +29,12 @@ class _HalamanKegiatanState extends State<HalamanKegiatan> {
     final response = await http.get(
       Uri.parse(koneksi().baseUrl + 'formulir/validasiAbsen?token=$token'),
     );
-    log(response.body);
+    log(response.statusCode.toString());
     if (response.statusCode == 400) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Silahkan lakukan absen terlebih dahulu'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        CustomSnackBarError.show(
+            context, 'Silahkan lakukan absensi terlebih dahulup!');
+      }
     } else {
       Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => HalamanTambahKegiatan(),
@@ -51,10 +50,12 @@ class _HalamanKegiatanState extends State<HalamanKegiatan> {
         Uri.parse(koneksi().baseUrl + 'kegiatan/show/$userId?token=$token'));
 
     if (response.statusCode == 200) {
-      setState(() {
-        kegiatan = jsonDecode(response.body)['kegiatan'];
-        _isDataAvailable = kegiatan.isNotEmpty;
-      });
+      if (mounted) {
+        setState(() {
+          kegiatan = jsonDecode(response.body)['kegiatan'];
+          _isDataAvailable = kegiatan.isNotEmpty;
+        });
+      }
     } else {
       log(response.body);
     }
@@ -101,6 +102,110 @@ class _HalamanKegiatanState extends State<HalamanKegiatan> {
                   ),
                 ),
                 Divider(color: Colors.grey),
+                Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              print(picked);
+                              setState(() {
+                                // pickedDate = picked;
+                              });
+                            }
+                          },
+                          child: Container(
+                            height: 40,
+                            padding: EdgeInsets.only(top: 3, left: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 7,
+                                ),
+                              ],
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Dari Tanggal',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 5),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              print(picked);
+                              setState(() {
+                                // pickedDate = picked;
+                              });
+                            }
+                          },
+                          child: Container(
+                            height: 40,
+                            padding: EdgeInsets.only(top: 3, left: 15),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 7,
+                                ),
+                              ],
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Sampai Tanggal',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 5),
+                      TextButton(
+                        onPressed: () {
+                          // _showImagePickerDialog(context);
+                        },
+                        style: TextButton.styleFrom(
+                          backgroundColor: Color.fromARGB(255, 0, 160, 234),
+                          foregroundColor: Colors.white,
+                          fixedSize: Size(60, 40),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('Cari'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 10),
                 _isDataAvailable
                     ? ListView.builder(

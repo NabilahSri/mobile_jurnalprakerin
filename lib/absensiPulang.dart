@@ -26,8 +26,19 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
   DateTime _currentTime = DateTime.now();
   Timer? _timer;
   bool isLoading = false;
-  bool sudahAbsenMasuk = false;
+  // bool sudahAbsenMasuk = false;
   final String tanggal = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  Color accentPurpleColor = Color(0xFF016593);
+  Color accentPinkColor = Color.fromARGB(255, 130, 177, 199);
+  Color accentDarkGreenColor = Color.fromARGB(255, 49, 107, 134);
+  Color accentYellowColor = Color(0xFF0B3E55);
+  Color accentOrangeColor = Color.fromARGB(255, 101, 130, 143);
+
+  TextStyle? createStyle(Color color) {
+    ThemeData theme = Theme.of(context);
+    return theme.textTheme.headlineMedium?.copyWith(color: color);
+  }
 
   Future<void> absenPulang() async {
     setState(() {
@@ -58,6 +69,7 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
       },
     );
     log(vc);
+    log(response.statusCode.toString());
     if (response.statusCode == 400) {
       CustomSnackBarWarning.show(
           context, 'Silahkan lakukan absensi masuk terlebih dahulu!');
@@ -73,16 +85,16 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
       _showAlertDialog();
     } else {
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        final absen = responseData['absen'];
-        final id_absensi = absen['id'].toString();
-        final tanggal_absen = absen['tanggal'];
+        // final responseData = json.decode(response.body);
+        // final absen = responseData['absen'];
+        // final id_absensi = absen['id'].toString();
+        // final tanggal_absen = absen['tanggal'];
 
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('tanggal_absen', tanggal_absen);
+        // SharedPreferences prefs = await SharedPreferences.getInstance();
+        // await prefs.setString('tanggal_absen', tanggal_absen);
 
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => BottomNavigation(id: 1),
+          builder: (context) => BottomNavigation(id: 0),
         ));
         CustomSnackBarSuccess.show(
             context, 'Absensi pulang berhasil dilakukan.');
@@ -104,25 +116,29 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
 
   Future<String?> _initializeAbsensiMode() async {
     SharedPreferences shared = await SharedPreferences.getInstance();
-    return shared.getString('absen_model');
-  }
-
-  Future<String?> _initializetanggalAbsensi() async {
-    SharedPreferences shared = await SharedPreferences.getInstance();
-    final tanggal_absen = shared.getString('tanggal_absen');
-    if (tanggal_absen != tanggal) {
-      sudahAbsenMasuk = false;
+    if (shared.getString('absen_model') != null) {
+      return shared.getString('absen_model');
     } else {
-      sudahAbsenMasuk = true;
+      return 'Lokasi';
     }
   }
+
+  // Future<String?> _initializetanggalAbsensi() async {
+  //   SharedPreferences shared = await SharedPreferences.getInstance();
+  //   final tanggal_absen = shared.getString('tanggal_absen');
+  //   if (tanggal_absen != tanggal) {
+  //     sudahAbsenMasuk = false;
+  //   } else {
+  //     sudahAbsenMasuk = true;
+  //   }
+  // }
 
   @override
   void initState() {
     super.initState();
     _determinePosition();
     _timer = Timer.periodic(Duration(seconds: 1), (Timer t) => _updateTime());
-    _initializetanggalAbsensi();
+    // _initializetanggalAbsensi();
   }
 
   @override
@@ -195,11 +211,15 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
     final formatHari = DateFormat('EEEE', 'id_ID');
     final formatWaktu = DateFormat('HH:mm', 'id_ID');
     final formatTanggal = DateFormat('d MMMM y', 'id_ID');
-    return Center(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
       child: SingleChildScrollView(
         child: SafeArea(
           child: Container(
-            width: double.infinity,
+            width: screenWidth,
+            height: screenHeight,
             padding: EdgeInsets.symmetric(horizontal: 15.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -253,39 +273,43 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
                                       children: [
                                         CustomPaint(
                                           size: Size(180, 180),
-                                          painter: sudahAbsenMasuk
-                                              ? ThreeColorCirclePainterGreen()
-                                              : ThreeColorCirclePainter(),
+                                          painter:
+                                              // sudahAbsenMasuk
+                                              //     ? ThreeColorCirclePainterGreen()
+                                              //     :
+                                              ThreeColorCirclePainter(),
                                         ),
                                         Positioned(
                                           top: 80,
                                           left: 60,
-                                          child: sudahAbsenMasuk
-                                              ? Text(
-                                                  "Selesai",
-                                                  style: TextStyle(
-                                                    fontSize: 24,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: Colors.white,
+                                          child:
+                                              // sudahAbsenMasuk
+                                              //     ? Text(
+                                              //         "Selesai",
+                                              //         style: TextStyle(
+                                              //           fontSize: 24,
+                                              //           fontWeight: FontWeight.w500,
+                                              //           color: Colors.white,
+                                              //         ),
+                                              //       )
+                                              //     :
+                                              InkWell(
+                                            onTap: () {
+                                              absenPulang();
+                                            },
+                                            child: isLoading
+                                                ? CircularProgressIndicator(
+                                                    color: Colors.white)
+                                                : Text(
+                                                    "Pulang",
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Colors.white,
+                                                    ),
                                                   ),
-                                                )
-                                              : InkWell(
-                                                  onTap: () {
-                                                    absenPulang();
-                                                  },
-                                                  child: isLoading
-                                                      ? CircularProgressIndicator(
-                                                          color: Colors.white)
-                                                      : Text(
-                                                          "Pulang",
-                                                          style: TextStyle(
-                                                            fontSize: 24,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                ),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -355,14 +379,18 @@ class _HalamanAbsensiPulangState extends State<HalamanAbsensiPulang> {
                                     SizedBox(height: 20),
                                     OtpTextField(
                                       numberOfFields: 5,
-                                      borderColor: Color(0xFF512DA8),
-                                      //set to true to show as box or false to show as dash
-                                      showFieldAsBox: true,
-                                      //runs when a code is typed in
-                                      onCodeChanged: (String code) {
-                                        //handle validation or checks here
-                                      },
-                                      //runs when every textfield is filled
+                                      borderColor: accentYellowColor,
+                                      focusedBorderColor: accentYellowColor,
+                                      showFieldAsBox: false,
+                                      borderWidth: 4.0,
+                                      styles: [
+                                        createStyle(accentPurpleColor),
+                                        createStyle(accentPinkColor),
+                                        createStyle(accentDarkGreenColor),
+                                        createStyle(accentYellowColor),
+                                        createStyle(accentOrangeColor),
+                                      ],
+                                      onCodeChanged: (String code) {},
                                       onSubmit: (String verificationCode) {
                                         setState(() {
                                           vc = verificationCode;

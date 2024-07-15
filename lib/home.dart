@@ -26,35 +26,44 @@ class _HalamanHomeState extends State<HalamanHome> {
   String siswa = '';
   String kelas = '';
   String foto = '';
+  String userId = '';
 
   Future<void> showData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    String? userId = prefs.getString('id');
+    userId = prefs.getString('id')!;
     final response = await http.get(Uri.parse(
         koneksi().baseUrl + 'kehadiran/dashboard/$userId?token=$token'));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final dataSiswa = data['siswa'];
       log(data['siswa'].toString());
-      setState(() {
-        siswa = dataSiswa['name'];
-        kelas = dataSiswa['kelas'];
-        foto = dataSiswa['foto'] ??
-            "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png";
-        hadir = data['hadir'];
-        izin = data['izin'];
-        sakit = data['sakit'];
-        jam = data['total_jam_kerja']['jam'];
-        menit = data['total_jam_kerja']['menit'];
-      });
+      if (mounted) {
+        setState(() {
+          siswa = dataSiswa['name'];
+          kelas = dataSiswa['kelas'];
+          foto = dataSiswa['foto'] ?? 'assets/images/profile.png';
+          hadir = data['hadir'];
+          izin = data['izin'];
+          sakit = data['sakit'];
+          jam = data['total_jam_kerja']['jam'];
+          menit = data['total_jam_kerja']['menit'];
+        });
+      }
+      SharedPreferences shared = await SharedPreferences.getInstance();
+      shared.setString('absen_model', 'Lokasi');
+      // shared.setString('id', userId);
+      // log('userID = ' + userId);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      log(response.body);
     }
   }
 
@@ -71,14 +80,16 @@ class _HalamanHomeState extends State<HalamanHome> {
       log(jsonResponse['banner'].toString());
 
       if (banners != null) {
-        setState(() {
-          _imageList.clear();
-          for (int i = 0; i < banners.length; i++) {
-            final banner = banners[i];
-            final imageUrl = banner['gambar'];
-            _imageList.add(imageUrl);
-          }
-        });
+        if (mounted) {
+          setState(() {
+            _imageList.clear();
+            for (int i = 0; i < banners.length; i++) {
+              final banner = banners[i];
+              final imageUrl = banner['gambar'];
+              _imageList.add(imageUrl);
+            }
+          });
+        }
       } else {
         setState(() {
           _imageList.clear();
@@ -131,24 +142,38 @@ class _HalamanHomeState extends State<HalamanHome> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ClipOval(
-                        child: Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage(foto),
-                              fit: BoxFit.cover,
+                      foto == 'assets/images/profile.png'
+                          ? ClipOval(
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image:
+                                        AssetImage('assets/images/profile.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ClipOval(
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: NetworkImage(foto),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
                       SizedBox(height: 10),
                       Text(
                         '$siswa',
                         style: TextStyle(
                           fontSize: 24,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
@@ -162,22 +187,6 @@ class _HalamanHomeState extends State<HalamanHome> {
                       ),
                     ],
                   ),
-                  // Column(
-                  //   children: [
-                  //     ClipOval(
-                  //       child: Container(
-                  //         width: 58,
-                  //         height: 58,
-                  //         decoration: BoxDecoration(
-                  //           image: DecorationImage(
-                  //             image: NetworkImage(foto),
-                  //             fit: BoxFit.cover,
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     )
-                  //   ],
-                  // ),
                 ],
               ),
             )
@@ -188,7 +197,7 @@ class _HalamanHomeState extends State<HalamanHome> {
         child: Padding(
           padding: EdgeInsets.only(top: 25, left: 25, right: 25),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _imageList.isEmpty
                   ? CarouselSlider(
@@ -220,67 +229,56 @@ class _HalamanHomeState extends State<HalamanHome> {
                         },
                       ),
                     )
-                  : InkWell(
-                      // onTap: () {
-                      //   Navigator.of(context).push(
-                      //     MaterialPageRoute(
-                      //       builder: (context) => HalamanPengumuman(
-                      //         pengumumanId: ,
-                      //       ),
-                      //     ),
-                      //   );
-                      // },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: CarouselSlider(
-                          items: _imageList.map((image) {
-                            return Builder(
-                              builder: (BuildContext context) {
-                                return Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  height: MediaQuery.of(context).size.height,
-                                  margin: EdgeInsets.symmetric(horizontal: 5.0),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    image: DecorationImage(
-                                      image: NetworkImage(image),
-                                      fit: BoxFit.cover,
-                                    ),
+                  : Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: CarouselSlider(
+                        items: _imageList.map((image) {
+                          return Builder(
+                            builder: (BuildContext context) {
+                              return Container(
+                                width: MediaQuery.of(context).size.width,
+                                height: MediaQuery.of(context).size.height,
+                                margin: EdgeInsets.symmetric(horizontal: 5.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  image: DecorationImage(
+                                    image: NetworkImage(image),
+                                    fit: BoxFit.cover,
                                   ),
-                                );
-                              },
-                            );
-                          }).toList(),
-                          options: CarouselOptions(
-                            height: 160,
-                            aspectRatio: 16 / 9,
-                            viewportFraction: 0.8,
-                            initialPage: 0,
-                            enableInfiniteScroll: true,
-                            reverse: false,
-                            autoPlay: true,
-                            autoPlayInterval: Duration(seconds: 3),
-                            autoPlayAnimationDuration:
-                                Duration(milliseconds: 800),
-                            autoPlayCurve: Curves.fastOutSlowIn,
-                            enlargeCenterPage: true,
-                            onPageChanged: (index, reason) {
-                              setState(() {
-                                _currentPage = index;
-                              });
+                                ),
+                              );
                             },
-                          ),
+                          );
+                        }).toList(),
+                        options: CarouselOptions(
+                          height: 160,
+                          aspectRatio: 16 / 9,
+                          viewportFraction: 0.8,
+                          initialPage: 0,
+                          enableInfiniteScroll: true,
+                          reverse: false,
+                          autoPlay: true,
+                          autoPlayInterval: Duration(seconds: 3),
+                          autoPlayAnimationDuration:
+                              Duration(milliseconds: 800),
+                          autoPlayCurve: Curves.fastOutSlowIn,
+                          enlargeCenterPage: true,
+                          onPageChanged: (index, reason) {
+                            setState(() {
+                              _currentPage = index;
+                            });
+                          },
                         ),
                       ),
                     ),
-              SizedBox(height: 40),
-              // Text(
-              //   'Kehadiran',
-              //   style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
-              // ),
               SizedBox(height: 10),
+              Text(
+                'Lihat selengkapnya...',
+                style: TextStyle(fontSize: 12),
+              ),
+              SizedBox(height: 40),
               Column(
                 children: [
                   Row(
@@ -440,7 +438,7 @@ class _HalamanHomeState extends State<HalamanHome> {
                                       Text(
                                         '$jam jam $menit menit',
                                         style: TextStyle(
-                                            fontSize: 20, color: Colors.black),
+                                            fontSize: 15, color: Colors.black),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -448,7 +446,7 @@ class _HalamanHomeState extends State<HalamanHome> {
                                       Text(
                                         'Total Jam Kerja',
                                         style: TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 15,
                                             fontWeight: FontWeight.w500),
                                       )
                                     ],

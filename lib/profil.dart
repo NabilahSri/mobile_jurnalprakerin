@@ -36,9 +36,11 @@ class _HalamanProfilState extends State<HalamanProfil> {
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
       if (jsonResponse['success']) {
-        setState(() {
-          userData = jsonResponse['user'];
-        });
+        if (mounted) {
+          setState(() {
+            userData = jsonResponse['user'];
+          });
+        }
         log(userData.toString());
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,9 +58,11 @@ class _HalamanProfilState extends State<HalamanProfil> {
         ),
       );
     }
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> logout() async {
@@ -149,6 +153,10 @@ class _HalamanProfilState extends State<HalamanProfil> {
       setState(() {
         groupValue = absensiMode;
       });
+    } else {
+      setState(() {
+        groupValue = 'Lokasi';
+      });
     }
     log(groupValue.toString());
   }
@@ -216,22 +224,38 @@ class _HalamanProfilState extends State<HalamanProfil> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 10),
-                      Container(
-                        alignment: Alignment.center,
-                        child: ClipOval(
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage(userData['foto'] ??
-                                    "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png"),
-                                fit: BoxFit.cover,
+                      userData['foto'] == null
+                          ? Container(
+                              alignment: Alignment.center,
+                              child: ClipOval(
+                                child: Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                      image: AssetImage(
+                                          'assets/images/profile.png'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              alignment: Alignment.center,
+                              child: ClipOval(
+                                child: Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                      image: NetworkImage(userData['foto']),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
                       SizedBox(height: 10),
                       Container(
                         alignment: Alignment.center,

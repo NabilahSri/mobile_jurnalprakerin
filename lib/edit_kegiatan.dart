@@ -68,7 +68,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
                   alignment: Alignment.center,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: Color.fromARGB(255, 0, 1, 102),
+                    color: Color.fromARGB(253, 3, 146, 213),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Text(
@@ -134,6 +134,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
     String? siswaId = prefs.getString('id_siswa');
     String? kelasId = prefs.getString('id_kelas');
     String? absenId = prefs.getString('id_absensi');
+    log(absenId.toString());
     var request = http.MultipartRequest(
       'POST',
       Uri.parse(koneksi().baseUrl +
@@ -146,9 +147,6 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
         : null;
     request.fields['deskripsi'] = deskripsiValue;
     request.fields['durasi'] = durasiValue;
-    request.fields['id_absensi'] = absenId.toString();
-    request.fields['id_siswa'] = siswaId.toString();
-    request.fields['id_kelas'] = kelasId.toString();
     if (fileValue != null) {
       request.files.add(fileValue);
     }
@@ -245,7 +243,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
           ),
           child: AppBar(
             centerTitle: true,
-            backgroundColor: Color.fromARGB(255, 0, 1, 102),
+            backgroundColor: Color.fromARGB(253, 3, 146, 213),
             title: Text(
               'Detail Kegiatan',
               style: TextStyle(
@@ -301,7 +299,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
                       ]),
                   child: TextFormField(
                     controller: _durasiController,
-                    keyboardType: TextInputType.text,
+                    keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: "Durasi Pengerjaan (menit)",
                       border: InputBorder.none,
@@ -317,7 +315,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
                         _showImagePickerDialog(context);
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: Color.fromARGB(255, 0, 160, 234),
+                        backgroundColor: Color.fromARGB(255, 1, 101, 147),
                         foregroundColor: Colors.white,
                         fixedSize: Size(110, 48),
                         shape: RoundedRectangleBorder(
@@ -389,7 +387,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
                     alignment: Alignment.center,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 0, 1, 102),
+                      color: Color.fromARGB(253, 3, 146, 213),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
@@ -401,7 +399,7 @@ class _HalamanEditKegiatanState extends State<HalamanEditKegiatan> {
                     child: _isLoadingUpdate
                         ? CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            'Update',
+                            'Ubah',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,

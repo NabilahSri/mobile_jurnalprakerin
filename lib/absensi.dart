@@ -38,7 +38,7 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
 
   TextStyle? createStyle(Color color) {
     ThemeData theme = Theme.of(context);
-    return theme.textTheme.headline3?.copyWith(color: color);
+    return theme.textTheme.headlineMedium?.copyWith(color: color);
   }
 
   Future<void> absensi() async {
@@ -73,10 +73,12 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
       },
     );
     log(vc);
-    // if (response.statusCode == 400) {
-    //   CustomSnackBarWarning.show(
-    //       context, 'Anda sudah melakukan absen masuk hari ini.');
-    // }
+    log(response.body);
+    log(siswaId.toString());
+    if (response.statusCode == 400) {
+      CustomSnackBarWarning.show(
+          context, 'Anda sudah melakukan absen masuk hari ini.');
+    }
     if (response.statusCode == 404) {
       CustomSnackBarError.show(context, 'Kode Expired!');
     }
@@ -95,13 +97,15 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
         final tanggal_absen = absen['tanggal'];
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('tanggal_absen', tanggal_absen);
+        await prefs.setString('id_absensi', id_absensi);
+
+        log("absen" + id_absensi);
 
         Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => BottomNavigation(id: 0),
         ));
 
-        // sudahAbsenMasuk = true;
+        sudahAbsenMasuk = true;
 
         CustomSnackBarSuccess.show(
             context, 'Absensi masuk berhasil dilakukan.');
@@ -123,16 +127,22 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
 
   Future<String?> _initializeAbsensiMode() async {
     SharedPreferences shared = await SharedPreferences.getInstance();
-    return shared.getString('absen_model');
+    if (shared.getString('absen_model') != null) {
+      return shared.getString('absen_model');
+    } else {
+      return 'Lokasi';
+    }
   }
 
   Future<String?> _initializetanggalAbsensi() async {
     SharedPreferences shared = await SharedPreferences.getInstance();
     final tanggal_absen = shared.getString('tanggal_absen');
-    if (tanggal_absen != tanggal) {
-      sudahAbsenMasuk = false;
-    } else {
-      sudahAbsenMasuk = true;
+    if (tanggal_absen != null) {
+      if (tanggal_absen != tanggal) {
+        sudahAbsenMasuk = false;
+      } else {
+        sudahAbsenMasuk = true;
+      }
     }
   }
 
@@ -141,7 +151,7 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
     super.initState();
     _determinePosition();
     _timer = Timer.periodic(Duration(seconds: 1), (Timer t) => _updateTime());
-    _initializetanggalAbsensi();
+    // _initializetanggalAbsensi();
   }
 
   @override
@@ -211,15 +221,19 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     _initializeAbsensiMode();
     final formatHari = DateFormat('EEEE', 'id_ID');
     final formatWaktu = DateFormat('HH:mm', 'id_ID');
     final formatTanggal = DateFormat('d MMMM y', 'id_ID');
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
       child: SingleChildScrollView(
         child: SafeArea(
           child: Container(
-            width: double.infinity,
+            width: screenWidth,
+            height: screenHeight,
             padding: EdgeInsets.symmetric(horizontal: 15.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -273,39 +287,43 @@ class _HalamanAbsensiState extends State<HalamanAbsensi> {
                                       children: [
                                         CustomPaint(
                                           size: Size(180, 180),
-                                          painter: sudahAbsenMasuk
-                                              ? ThreeColorCirclePainterGreen()
-                                              : ThreeColorCirclePainter(),
+                                          painter:
+                                              // sudahAbsenMasuk
+                                              //     ? ThreeColorCirclePainterGreen()
+                                              // :
+                                              ThreeColorCirclePainter(),
                                         ),
                                         Positioned(
                                           top: 80,
                                           left: 60,
-                                          child: sudahAbsenMasuk
-                                              ? Text(
-                                                  "Selesai",
-                                                  style: TextStyle(
-                                                    fontSize: 24,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: Colors.white,
+                                          child:
+                                              // sudahAbsenMasuk
+                                              //     ? Text(
+                                              //         "Selesai",
+                                              //         style: TextStyle(
+                                              //           fontSize: 24,
+                                              //           fontWeight: FontWeight.w500,
+                                              //           color: Colors.white,
+                                              //         ),
+                                              //       )
+                                              //     :
+                                              InkWell(
+                                            onTap: () {
+                                              absensi();
+                                            },
+                                            child: isLoading
+                                                ? CircularProgressIndicator(
+                                                    color: Colors.white)
+                                                : Text(
+                                                    "Masuk",
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      color: Colors.white,
+                                                    ),
                                                   ),
-                                                )
-                                              : InkWell(
-                                                  onTap: () {
-                                                    absensi();
-                                                  },
-                                                  child: isLoading
-                                                      ? CircularProgressIndicator(
-                                                          color: Colors.white)
-                                                      : Text(
-                                                          "Masuk",
-                                                          style: TextStyle(
-                                                            fontSize: 24,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                ),
+                                          ),
                                         ),
                                       ],
                                     ),

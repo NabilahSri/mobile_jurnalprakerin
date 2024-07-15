@@ -88,6 +88,7 @@ flutter:
   assets:
     - assets\images\logo-ypc.png
     - assets\images\nodata.jpg
+    - assets\images\profile.png
   #   - family: Trajan Pro
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf

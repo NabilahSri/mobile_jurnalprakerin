@@ -52,7 +52,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
         await prefs.setString('id_kelas', id_kelas);
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (context) => BottomNavigation(id: 3),
+              builder: (context) => BottomNavigation(id: 0),
             ),
             (route) => false);
       } else {
@@ -154,7 +154,7 @@ class _HalamanLoginState extends State<HalamanLogin> {
                     alignment: Alignment.center,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 0, 1, 102),
+                      color: Color.fromARGB(255, 0, 160, 234),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(

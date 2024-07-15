@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CustomSnackBarWarning {
+  static final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   static show(BuildContext context, String message) {
     SnackBar snackBar = SnackBar(
       content: Container(
@@ -55,7 +57,7 @@ class CustomSnackBarWarning {
             ),
             InkWell(
               onTap: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                _scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
               },
               child: Container(
                 width: 40,

@@ -9,6 +9,7 @@ import 'package:ujikom_jurnalprakerin/custom_snackbar_success.dart';
 import 'package:ujikom_jurnalprakerin/koneksi.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'package:ujikom_jurnalprakerin/login.dart';
 import 'package:ujikom_jurnalprakerin/profil.dart';
 
 class HalamanEditAkun extends StatefulWidget {
@@ -77,9 +78,9 @@ class _HalamanEditProfilState extends State<HalamanEditAkun> {
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
       if (jsonResponse['success']) {
-        CustomSnackBarSuccess.show(context, 'Data berhasil diupdate.');
+        CustomSnackBarSuccess.show(context, 'Silahkan login kembali.');
         Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => BottomNavigation(id: 3),
+          builder: (context) => HalamanLogin(),
         ));
       } else {
         CustomSnackBarError.show(context, 'Data gagal diupdate!');

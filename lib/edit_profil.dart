@@ -29,22 +29,33 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
   final TextEditingController alamatController = TextEditingController();
   Map<String, dynamic> userData = {};
   Future<void> fetchData() async {
+    setState(() {
+      _isLoading = true;
+    });
     SharedPreferences shared = await SharedPreferences.getInstance();
     String? userId = shared.getString('id');
     String? token = shared.getString('token');
+    log('lalala');
+    log(userId.toString());
+    log(token.toString());
     final response = await http
         .get(Uri.parse(koneksi().baseUrl + 'auth/show/$userId?token=$token'));
+    log('haiii');
     if (response.statusCode == 200) {
+      log('hohoohoh');
       final jsonResponse = jsonDecode(response.body);
       if (jsonResponse['success']) {
-        setState(() {
-          userData = jsonResponse['user'];
-          nameController.text = userData['name'];
-          emailController.text = userData['email'];
-          telpController.text = userData['telp'];
-          alamatController.text = userData['alamat'];
-        });
+        if (mounted) {
+          setState(() {
+            userData = jsonResponse['user'];
+            nameController.text = userData['name'];
+            emailController.text = userData['email'];
+            telpController.text = userData['telp'];
+            alamatController.text = userData['alamat'];
+          });
+        }
         log(userData.toString());
+        log(userData['foto'].toString());
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -61,6 +72,9 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
         ),
       );
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void _pickImage() async {
@@ -197,197 +211,221 @@ class _HalamanEditProfilState extends State<HalamanEditProfil> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: SafeArea(
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(15.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  alignment: Alignment.center,
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                backgroundColor: Colors.transparent,
+                color: Color.fromARGB(255, 0, 160, 234),
+              ),
+            )
+          : SingleChildScrollView(
+              child: SafeArea(
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(15.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _image == null
-                          ? ClipOval(
-                              child: Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: NetworkImage(userData['foto'] ??
-                                        "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-Images.png"),
-                                    fit: BoxFit.cover,
+                      Container(
+                        alignment: Alignment.center,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            _image == null
+                                ? userData['foto'] != null
+                                    ? ClipOval(
+                                        child: Container(
+                                          width: 100,
+                                          height: 100,
+                                          decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                              image: NetworkImage(
+                                                  userData['foto']),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : ClipOval(
+                                        child: Container(
+                                          width: 100,
+                                          height: 100,
+                                          decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                              image: AssetImage(
+                                                  'assets/images/profile.png'),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                : ClipOval(
+                                    child: Container(
+                                      width: 100,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: FileImage(_image!),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
                                   ),
+                            InkWell(
+                              onTap: () {
+                                _showImagePickerDialog(context);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(20),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Icon(Icons.edit, color: Colors.black),
                                 ),
                               ),
                             )
-                          : ClipOval(
-                              child: Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: FileImage(_image!),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      Container(
+                        height: 55,
+                        padding: EdgeInsets.only(top: 3, left: 15),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 7,
+                              )
+                            ]),
+                        child: TextFormField(
+                          keyboardType: TextInputType.text,
+                          controller: nameController,
+                          onChanged: (value) {
+                            nameController.text = value;
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Masukan nama",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      Container(
+                        height: 55,
+                        padding: EdgeInsets.only(top: 3, left: 15),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 7,
+                              )
+                            ]),
+                        child: TextFormField(
+                          keyboardType: TextInputType.text,
+                          controller: emailController,
+                          onChanged: (value) {
+                            emailController.text = value;
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Masukan email",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      Container(
+                        height: 55,
+                        padding: EdgeInsets.only(top: 3, left: 15),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 7,
+                              )
+                            ]),
+                        child: TextFormField(
+                          keyboardType: TextInputType.text,
+                          controller: telpController,
+                          onChanged: (value) {
+                            telpController.text = value;
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Masuka no telepon",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      Container(
+                        height: 100,
+                        padding: EdgeInsets.only(top: 3, left: 15),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 7,
+                              )
+                            ]),
+                        child: TextFormField(
+                          maxLines: 3,
+                          keyboardType: TextInputType.text,
+                          controller: alamatController,
+                          onChanged: (value) {
+                            alamatController.text = value;
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Masukan alamat",
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 15),
                       InkWell(
                         onTap: () {
-                          _showImagePickerDialog(context);
+                          editData();
                         },
                         child: Container(
+                          alignment: Alignment.center,
+                          height: 48,
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(10),
-                            ),
+                            color: Color.fromARGB(255, 0, 160, 234),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                              )
+                            ],
                           ),
-                          child: Icon(Icons.edit, color: Colors.black),
+                          child: _isLoading
+                              ? CircularProgressIndicator(color: Colors.white)
+                              : Text(
+                                  'Simpan Perubahan',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       )
                     ],
                   ),
                 ),
-                SizedBox(height: 15),
-                Container(
-                  height: 55,
-                  padding: EdgeInsets.only(top: 3, left: 15),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 7,
-                        )
-                      ]),
-                  child: TextFormField(
-                    keyboardType: TextInputType.text,
-                    controller: nameController,
-                    onChanged: (value) {
-                      nameController.text = value;
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Masukan nama",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
-                Container(
-                  height: 55,
-                  padding: EdgeInsets.only(top: 3, left: 15),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 7,
-                        )
-                      ]),
-                  child: TextFormField(
-                    keyboardType: TextInputType.text,
-                    controller: emailController,
-                    onChanged: (value) {
-                      emailController.text = value;
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Masukan email",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
-                Container(
-                  height: 55,
-                  padding: EdgeInsets.only(top: 3, left: 15),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 7,
-                        )
-                      ]),
-                  child: TextFormField(
-                    keyboardType: TextInputType.text,
-                    controller: telpController,
-                    onChanged: (value) {
-                      telpController.text = value;
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Masuka no telepon",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
-                Container(
-                  height: 100,
-                  padding: EdgeInsets.only(top: 3, left: 15),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 7,
-                        )
-                      ]),
-                  child: TextFormField(
-                    maxLines: 3,
-                    keyboardType: TextInputType.text,
-                    controller: alamatController,
-                    onChanged: (value) {
-                      alamatController.text = value;
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Masukan alamat",
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
-                InkWell(
-                  onTap: () {
-                    editData();
-                  },
-                  child: Container(
-                    alignment: Alignment.center,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 0, 160, 234),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                        )
-                      ],
-                    ),
-                    child: _isLoading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            'Simpan Perubahan',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                )
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }
